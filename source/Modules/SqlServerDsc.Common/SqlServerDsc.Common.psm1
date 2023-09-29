@@ -1821,7 +1821,7 @@ function Test-ActiveNode
     $result = $false
 
     # Determine if this is a failover cluster instance (FCI)
-    if ( $ServerObject.IsMemberOfWsfcCluster )
+    if ( $ServerObject.IsClustered )
     {
         <#
             If the current node name is the same as the name the instances is
