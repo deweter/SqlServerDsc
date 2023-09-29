@@ -9,4 +9,5 @@ ConvertFrom-StringData @'
     NotInDesiredState = Configuration option '{0}' is not in desired state. Expected '{1}', but was '{2}'.
     InDesiredState = Configuration option '{0}' is in desired state.
     NoRestartNeeded = The option was changed without the need to restart the SQL Server instance.
+    NotActiveNode = The node '{0}' is not actively hosting the instance '{1}'. Will always return success for this resource on this node, until this node is actively hosting the instance.
 '@

@@ -7,4 +7,6 @@ class DSC_SqlConfiguration : OMI_BaseResource
     [Write, Description("The hostname of the _SQL Server_ to be configured. Default value is the current computer name.")] String ServerName;
     [Write, Description("Determines whether the instance should be restarted after updating the configuration option.")] Boolean RestartService;
     [Write, Description("The length of time, in seconds, to wait for the service to restart. Default is `120` seconds.")] UInt32 RestartTimeout;
+    [Write, Description("Specifies that the resource will only determine if a change is needed if the target node is the active host of the _SQL Server_ instance.")] Boolean ProcessOnlyOnActiveNode;
+    [Read, Description("Returns if the current node is actively hosting the _SQL Server_ instance.")] Boolean IsActiveNode;
 };

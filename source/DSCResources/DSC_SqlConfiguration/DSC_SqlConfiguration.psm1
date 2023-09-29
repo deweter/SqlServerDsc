@@ -32,6 +32,11 @@ $script:localizedData = Get-LocalizedData -DefaultUICulture 'en-US'
         *** Not used in this function ***
         The length of time, in seconds, to wait for the service to restart. Default
         is 120 seconds.
+
+    .PARAMETER ProcessOnlyOnActiveNode
+        *** Not used in this function ***
+        Specifies that the resource will only determine if a change is needed if the target node is the active host of the SQL Server Instance.
+        Not used in Set-TargetResource.
 #>
 function Get-TargetResource
 {
@@ -62,10 +67,17 @@ function Get-TargetResource
 
         [Parameter()]
         [System.UInt32]
-        $RestartTimeout = 120
+        $RestartTimeout = 120,
+
+        [Parameter()]
+        [System.UInt32]
+        $ProcessOnlyOnActiveNode = 120
     )
 
     $sql = Connect-SQL -ServerName $ServerName -InstanceName $InstanceName -ErrorAction 'Stop'
+
+    # Is this node actively hosting the SQL instance?
+    $isActiveNode = Test-ActiveNode -ServerObject $sql
 
     # Get the current value of the configuration option.
     $option = $sql.Configuration.Properties |
@@ -89,6 +101,7 @@ function Get-TargetResource
         OptionValue    = $option.ConfigValue
         RestartService = $RestartService
         RestartTimeout = $RestartTimeout
+        IsActiveNode   = $isActiveNode
     }
 }
 
@@ -116,6 +129,11 @@ function Get-TargetResource
     .PARAMETER RestartTimeout
         The length of time, in seconds, to wait for the service to restart. Default
         is 120 seconds.
+
+    .PARAMETER ProcessOnlyOnActiveNode
+        *** Not used in this function ***
+        Specifies that the resource will only determine if a change is needed if the target node is the active host of the SQL Server Instance.
+        Not used in Set-TargetResource.
 #>
 function Set-TargetResource
 {
@@ -145,7 +163,11 @@ function Set-TargetResource
 
         [Parameter()]
         [System.UInt32]
-        $RestartTimeout = 120
+        $RestartTimeout = 120,
+
+        [Parameter()]
+        [System.Boolean]
+        $ProcessOnlyOnActiveNode
     )
 
     $sql = Connect-SQL -ServerName $ServerName -InstanceName $InstanceName -ErrorAction 'Stop'
@@ -216,6 +238,11 @@ function Set-TargetResource
         *** Not used in this function ***
         The length of time, in seconds, to wait for the service to restart. Default
         is 120 seconds.
+
+
+    .PARAMETER ProcessOnlyOnActiveNode
+        Specifies that the resource will only determine if a change is needed if
+        the target node is the active host of the SQL Server instance.
 #>
 function Test-TargetResource
 {
@@ -247,11 +274,29 @@ function Test-TargetResource
 
         [Parameter()]
         [System.UInt32]
-        $RestartTimeout = 120
+        $RestartTimeout = 120,
+
+        [Parameter()]
+        [System.Boolean]
+        $ProcessOnlyOnActiveNode
     )
 
     # Get the current value of the configuration option.
     $getTargetResourceResult = Get-TargetResource @PSBoundParameters
+
+
+    <#
+        If this is supposed to process only the active node, and this is not the
+        active node, don't bother evaluating the test.
+    #>
+    if ($ProcessOnlyOnActiveNode -and -not $getTargetResourceResult.IsActiveNode)
+    {
+        Write-Verbose -Message (
+            $script:localizedData.NotActiveNode -f (Get-ComputerName), $InstanceName
+        )
+
+        return $result
+    }
 
     if ($getTargetResourceResult.OptionValue -eq $OptionValue)
     {
